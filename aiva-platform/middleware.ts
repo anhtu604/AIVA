@@ -1,9 +1,8 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  // Tạo response ban đầu
-  let supabaseResponse = NextResponse.next({
+  let response = NextResponse.next({
     request: {
       headers: request.headers,
     },
@@ -14,47 +13,49 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll()
+        get(name: string) {
+          return request.cookies.get(name)?.value
         },
-        setAll(cookiesToSet) {
-          // Update cookie cho request hiện tại (để supabase client có thể đọc ngay)
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          
-          // Tạo response mới với request đã update cookie
-          supabaseResponse = NextResponse.next({
-            request,
+        set(name: string, value: string, options: CookieOptions) {
+          request.cookies.set({ name, value, ...options })
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
           })
-          
-          // Đặt cookie cho response trả về trình duyệt
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
+          response.cookies.set({ name, value, ...options })
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({ name, value: '', ...options })
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          response.cookies.set({ name, value: '', ...options })
         },
       },
     }
   )
 
-  // Gọi getUser() ĐỂ REFRESH TOKEN THEO TÀI LIỆU SUPABASE
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // QUAN TRỌNG: Refresh session
+  const { data: { user } } = await supabase.auth.getUser()
 
-  const url = request.nextUrl.clone()
-  const protectedRoutes = ['/staff', '/trainer', '/admin']
-  const isProtectedRoute = protectedRoutes.some((route) => url.pathname.startsWith(route))
+  // Logic chặn truy cập: Nếu chưa login mà vào /staff, /admin, /trainer thì về /login
+  const isProtectedPath = ['/staff', '/admin', '/trainer'].some(path =>
+    request.nextUrl.pathname.startsWith(path)
+  )
 
-  if (!user && isProtectedRoute) {
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+  if (isProtectedPath && !user) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  return supabaseResponse
+  return response
 }
 
-// KHÔNG CHẠY MIDDLEWARE CHO CÁC FILE TĨNH (TRÁNH LỖI VÀ TỐI ƯU HIỆU SUẤT)
+// Cấu hình Matcher: Loại bỏ hoàn toàn các file tĩnh để tránh lỗi Edge
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'
-  ]
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }
