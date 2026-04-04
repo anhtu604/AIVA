@@ -1,0 +1,66 @@
+﻿
+> aiva-platform@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.2.2 (Turbopack)
+- Environments: .env.local
+
+node.exe : ΓÜá The 
+"middleware" file 
+convention is deprecated. 
+Please use "proxy" 
+instead. Learn more: https
+://nextjs.org/docs/message
+s/middleware-to-proxy
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" "C:
+\Users\anhtu\AppData\Roami
+ng\ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (Γ  
+  Üá The "middle...lewa   
+ re-to-proxy:String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 2.0s
+  Running TypeScript ...
+  Finished TypeScript in 2.1s ...
+  Collecting page data using 18 workers ...
+  Generating static pages using 18 workers (0/18) ...
+  Generating static pages using 18 workers (4/18) 
+  Generating static pages using 18 workers (8/18) 
+  Generating static pages using 18 workers (13/18) 
+Γ£ô Generating static pages using 18 workers (18/18) in 537ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /
+Γö£ Γùï /_not-found
+Γö£ ╞Æ /admin
+Γö£ ╞Æ /admin/organizations
+Γö£ ╞Æ /admin/qa-checklist
+Γö£ ╞Æ /admin/users
+Γö£ ╞Æ /api/auth/signout
+Γö£ ╞Æ /api/public/chat
+Γö£ ╞Æ /api/staff/chat
+Γö£ ╞Æ /api/trainer/knowledge
+Γö£ Γùï /care
+Γö£ ╞Æ /staff
+Γö£ ╞Æ /staff/[module]
+Γö£ ╞Æ /staff/referrals
+Γöö Γùï /trainer/knowledge
+
+
+╞Æ Proxy (Middleware)
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+
