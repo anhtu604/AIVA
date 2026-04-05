@@ -4,6 +4,7 @@ import { systemPrompts } from '@/services/ai/prompts/systemPrompts';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
     try {
@@ -27,6 +28,11 @@ export async function POST(req: Request) {
                 stream: true
             })
         });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`ChiaseGPU API Error (${res.status}): ${errorText}`);
+        }
 
         const stream = new ReadableStream({
             async start(controller) {

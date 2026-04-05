@@ -4,6 +4,7 @@ import { systemPrompts, MODULE_PROMPT_MAP } from '@/services/ai/prompts/systemPr
 import { createClient } from '@/lib/supabase/server';
 
 export const maxDuration = 30;
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
     // ── 1. Kiểm tra Auth bắt buộc ────────────────────────────────────────────
@@ -60,6 +61,11 @@ export async function POST(req: Request) {
                 stream: true
             })
         });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`ChiaseGPU API Error (${res.status}): ${errorText}`);
+        }
 
         const stream = new ReadableStream({
             async start(controller) {
