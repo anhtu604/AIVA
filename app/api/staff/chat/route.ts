@@ -53,9 +53,10 @@ export async function POST(req: Request) {
             } else if (Array.isArray(m.parts)) {
                 contentStr = m.parts.filter((p: any) => p.type === 'text').map((p: any) => p.text || '').join('');
             }
+            // Một số AI backend (như 400 error tại chiasegpu) không chấp nhận content rỗng, phải thay bằng dấu cách
             return {
                 role: m.role,
-                content: contentStr
+                content: contentStr.trim() || ' '
             };
         });
 

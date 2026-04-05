@@ -9,7 +9,6 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
     try {
         const { messages } = await req.json();
-        console.log("RECEIVED MESSAGES:", JSON.stringify(messages, null, 2));
 
         // Lấy system prompt cho PUBLIC CARE
         const systemPrompt = systemPrompts.PUBLIC_CARE;
@@ -22,9 +21,10 @@ export async function POST(req: Request) {
             } else if (Array.isArray(m.parts)) {
                 contentStr = m.parts.filter((p: any) => p.type === 'text').map((p: any) => p.text || '').join('');
             }
+            // Một số AI backend (như 400 error tại chiasegpu) không chấp nhận content rỗng, phải thay bằng dấu cách
             return {
                 role: m.role,
-                content: contentStr
+                content: contentStr.trim() || ' '
             };
         });
 
