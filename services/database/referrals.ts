@@ -37,7 +37,7 @@ export async function createReferral(payload: ReferralPayload) {
         .from('referrals')
         .insert({
             session_id: payload.sessionId || null,
-            target_org_id: payload.targetOrgId,
+            target_organization_id: payload.targetOrgId,
             contact_phone: payload.phone,
             consent_given: payload.consentGiven,
             risk_data: payload.riskData || {},
@@ -61,7 +61,7 @@ export type ReferralStatus = 'PENDING' | 'ACCEPTED' | 'COMPLETED' | 'REJECTED';
 export interface Referral {
     id: string;
     session_id: string | null;
-    target_org_id: string;
+    target_organization_id: string;
     contact_phone: string;
     consent_given: boolean;
     risk_data: Record<string, any>;
