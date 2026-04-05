@@ -47,7 +47,7 @@ export default function LoginPage() {
                 {/* Brand Header */}
                 <div className="flex flex-col items-center text-center mb-10 overflow-hidden">
                     <div className="transform hover:scale-105 transition-transform duration-500 mb-6">
-                        <AivaLogo size={82} glow={true} />
+                        <AivaLogo size={82} variant="full" />
                     </div>
                     <p className="text-slate-500 font-bold uppercase tracking-[0.25em] text-[10px] mt-2 bg-white/5 px-4 py-1.5 rounded-full border border-white/5 backdrop-blur-sm">
                         AI System for HIV/AIDS Support

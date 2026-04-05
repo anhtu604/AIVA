@@ -81,13 +81,8 @@ export default function PublicCarePage() {
                         </Link>
                         <div className="w-px h-6 bg-slate-100" />
                         <div className="flex items-center gap-2.5">
-                            {/* Simple Ribbon icon for brand recognition */}
-                            <svg width="28" height="28" viewBox="0 0 100 100" fill="none" className="flex-shrink-0">
-                                <path
-                                    d="M50 20C40 20 32 28 32 38C32 45 35 50 40 55L25 85H38L50 63L62 85H75L60 55C65 50 68 45 68 38C68 28 60 20 50 20ZM50 30C54.4 30 58 33.6 58 38C58 42.4 54.4 46 50 46C45.6 46 42 42.4 42 38C42 33.6 45.6 30 50 30Z"
-                                    fill="#e11d48"
-                                />
-                            </svg>
+                            {/* Brand icon */}
+                            <img src="/brand/logo-icon.png" alt="AIVA" width={28} height={28} className="flex-shrink-0" />
                             <div>
                                 <h1 className="text-base font-bold text-slate-800 tracking-tight leading-none">AIVA Care</h1>
                                 <div className="flex items-center gap-1.5 mt-0.5">

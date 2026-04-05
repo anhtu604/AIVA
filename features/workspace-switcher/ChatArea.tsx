@@ -73,7 +73,7 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
             {/* Enterprise Dashboard Header with branding */}
             <div className="flex-shrink-0 px-6 py-5 border-b border-white/10 flex items-center justify-between bg-slate-900/40 backdrop-blur-xl">
                 <div className="flex items-center gap-4">
-                    <AivaLogo size={36} showText={false} glow={true} />
+                    <AivaLogo size={36} variant="icon" />
                     <div>
                         <div className="flex items-center gap-2">
                             <h2 className="text-white font-bold text-base leading-none tracking-tight">Hệ thống AIVA</h2>
@@ -116,7 +116,7 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
                                         </div>
                                       )
                                     : (
-                                        <AivaLogo size={32} showText={false} glow={false} />
+                                        <AivaLogo size={32} variant="icon" />
                                       )
                                 }
                             </div>
@@ -136,7 +136,7 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
 
                 {isLoading && (
                     <div className="flex items-start gap-4">
-                        <AivaLogo size={32} showText={false} glow={false} />
+                        <AivaLogo size={32} variant="icon" />
                         <div className="bg-slate-900 border border-white/10 rounded-2xl rounded-tl-none px-5 py-4 flex gap-1.5 items-center shadow-xl">
                             <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-bounce" style={{ animationDelay: '0ms' }} />
                             <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-bounce" style={{ animationDelay: '150ms' }} />

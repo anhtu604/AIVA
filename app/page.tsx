@@ -1,14 +1,14 @@
 import Link from "next/link";
 import AivaLogo from "@/features/brand/AivaLogo";
-import { ArrowRight, ShieldCheck, HeartHandshake, ShieldAlert, FileText, ChevronRight, Sparkles } from "lucide-react";
+import { ArrowRight, ShieldCheck, HeartHandshake, ShieldAlert, FileText, ChevronRight } from "lucide-react";
 
 export default function Home() {
     return (
         <div className="flex flex-col min-h-screen bg-slate-950 text-white">
-            {/* Header / Navbar */}
+            {/* Header */}
             <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-slate-950/80 backdrop-blur-xl">
                 <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-                    <AivaLogo size={32} showText={true} glow={false} />
+                    <AivaLogo size={32} variant="icon" />
                     <nav className="flex items-center gap-4">
                         <Link 
                             href="/login" 
@@ -29,7 +29,6 @@ export default function Home() {
             {/* Hero Section */}
             <main className="flex-1 flex flex-col">
                 <section className="relative overflow-hidden pt-28 pb-36">
-                    {/* Background decoration */}
                     <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[60%] bg-rose-600/10 blur-[150px] rounded-full pointer-events-none" />
                     <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[60%] bg-cyan-600/8 blur-[150px] rounded-full pointer-events-none" />
                     
@@ -42,9 +41,9 @@ export default function Home() {
                             AI System for HIV/AIDS Support
                         </div>
 
-                        {/* Logo Hero - Central Brand Element */}
-                        <div className="mb-10 transform hover:scale-105 transition-transform duration-500">
-                            <AivaLogo size={100} showText={true} glow={true} />
+                        {/* Logo Hero */}
+                        <div className="mb-10">
+                            <AivaLogo size={120} variant="full" className="drop-shadow-[0_0_30px_rgba(225,29,72,0.3)]" />
                         </div>
                         
                         <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight max-w-4xl mb-6 leading-tight">
@@ -87,40 +86,31 @@ export default function Home() {
                             <p className="text-slate-500 font-medium">Ba trụ cột cốt lõi của hệ thống AIVA</p>
                         </div>
                         <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                            {/* Feature 1 */}
                             <div className="p-8 rounded-3xl bg-slate-950/50 border border-white/5 hover:border-rose-500/30 transition-all group hover:shadow-2xl hover:shadow-rose-500/5">
-                                <div className="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform glow-primary">
+                                <div className="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                                     <ShieldAlert className="w-6 h-6" />
                                 </div>
-                                <h3 className="text-lg font-bold mb-3">
-                                    Tư vấn Ẩn danh
-                                </h3>
+                                <h3 className="text-lg font-bold mb-3">Tư vấn Ẩn danh</h3>
                                 <p className="text-slate-500 leading-relaxed text-sm">
                                     Đảm bảo riêng tư 100%. Chatbot AI hỗ trợ đánh giá nguy cơ và cung cấp thông tin y tế hoàn toàn bảo mật.
                                 </p>
                             </div>
 
-                            {/* Feature 2 */}
                             <div className="p-8 rounded-3xl bg-slate-950/50 border border-white/5 hover:border-cyan-500/30 transition-all group hover:shadow-2xl hover:shadow-cyan-500/5">
-                                <div className="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform glow-secondary">
+                                <div className="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                                     <HeartHandshake className="w-6 h-6" />
                                 </div>
-                                <h3 className="text-lg font-bold mb-3">
-                                    Chuyển tuyến Nhanh chóng
-                                </h3>
+                                <h3 className="text-lg font-bold mb-3">Chuyển tuyến Nhanh chóng</h3>
                                 <p className="text-slate-500 leading-relaxed text-sm">
                                     Kết nối liền mạch từ tư vấn cộng đồng đến cơ sở y tế (CBO, VCT, OPC) với quy trình đồng thuận rõ ràng.
                                 </p>
                             </div>
 
-                            {/* Feature 3 */}
                             <div className="p-8 rounded-3xl bg-slate-950/50 border border-white/5 hover:border-purple-500/30 transition-all group hover:shadow-2xl hover:shadow-purple-500/5">
                                 <div className="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                                     <FileText className="w-6 h-6" />
                                 </div>
-                                <h3 className="text-lg font-bold mb-3">
-                                    Hỗ trợ Nghiệp vụ
-                                </h3>
+                                <h3 className="text-lg font-bold mb-3">Hỗ trợ Nghiệp vụ</h3>
                                 <p className="text-slate-500 leading-relaxed text-sm">
                                     Không gian làm việc chuyên biệt cho từng module: CBO, VCT, Giám sát và Truyền thông.
                                 </p>
@@ -134,7 +124,7 @@ export default function Home() {
             <footer className="border-t border-white/5 bg-slate-950 py-10 mt-auto">
                 <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <AivaLogo size={24} showText={false} glow={false} />
+                        <AivaLogo size={24} variant="icon" />
                         <p className="text-xs text-slate-600 font-bold uppercase tracking-widest">
                             &copy; {new Date().getFullYear()} AIVA Platform
                         </p>

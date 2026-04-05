@@ -40,7 +40,7 @@ export default function StaffSidebar({ staffName, staffEmail }: StaffSidebarProp
         >
             {/* Enterprise Header with Brand Logo */}
             <div className={`flex items-center gap-3 px-5 py-6 border-b border-white/5 bg-slate-900/20 ${collapsed ? 'justify-center' : ''}`}>
-                <AivaLogo size={32} showText={!collapsed} glow={true} />
+                <AivaLogo size={32} variant={collapsed ? 'icon' : 'full'} />
             </div>
 
             {/* Navigation Grid (Data Dense) */}
