@@ -46,10 +46,18 @@ export async function POST(req: Request) {
 
     // ── 4. Gọi AI và stream kết quả ───────────────────────────────────────────
     try {
-        const cleanedMessages = messages.map((m: any) => ({
-            role: m.role,
-            content: m.content
-        }));
+        const cleanedMessages = messages.map((m: any) => {
+            let contentStr = '';
+            if (typeof m.content === 'string') {
+                contentStr = m.content;
+            } else if (Array.isArray(m.parts)) {
+                contentStr = m.parts.filter((p: any) => p.type === 'text').map((p: any) => p.text || '').join('');
+            }
+            return {
+                role: m.role,
+                content: contentStr
+            };
+        });
 
         const res = await fetch('https://llm.chiasegpu.vn/v1/chat/completions', {
             method: 'POST',

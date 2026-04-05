@@ -9,15 +9,24 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
     try {
         const { messages } = await req.json();
+        console.log("RECEIVED MESSAGES:", JSON.stringify(messages, null, 2));
 
         // Lấy system prompt cho PUBLIC CARE
         const systemPrompt = systemPrompts.PUBLIC_CARE;
 
-        // Chỉ truyền các field chuẩn của OpenAI (role, content), loại bỏ các field thừa của Vercel UI (id, createdAt...)
-        const cleanedMessages = messages.map((m: any) => ({
-            role: m.role,
-            content: m.content
-        }));
+        // Chỉ truyền các field chuẩn của OpenAI (role, content)
+        const cleanedMessages = messages.map((m: any) => {
+            let contentStr = '';
+            if (typeof m.content === 'string') {
+                contentStr = m.content;
+            } else if (Array.isArray(m.parts)) {
+                contentStr = m.parts.filter((p: any) => p.type === 'text').map((p: any) => p.text || '').join('');
+            }
+            return {
+                role: m.role,
+                content: contentStr
+            };
+        });
 
         const res = await fetch('https://llm.chiasegpu.vn/v1/chat/completions', {
             method: 'POST',
