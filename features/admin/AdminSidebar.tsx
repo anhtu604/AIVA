@@ -13,6 +13,7 @@ import {
     Bot,
     Dot,
     ClipboardCheck,
+    ScrollText,
 } from 'lucide-react';
 
 // ─── Nav items ────────────────────────────────────────────────────────────────
@@ -34,6 +35,15 @@ const ADMIN_NAV = [
         color: 'text-indigo-400',
         bg:    'bg-indigo-500/10',
         border:'border-indigo-500/30',
+    },
+    {
+        slug:  'logs',
+        label: 'Nhật ký Hệ thống',
+        description: 'Audit & Bảo mật',
+        icon:  ScrollText,
+        color: 'text-rose-400',
+        bg:    'bg-rose-500/10',
+        border:'border-rose-500/30',
     },
 ] as const;
 

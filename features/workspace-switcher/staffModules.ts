@@ -1,7 +1,10 @@
 import {
     Users,
     FlaskConical,
+    HeartPulse,
+    Microscope,
     BarChart2,
+    Briefcase,
     Megaphone,
     Headphones,
 } from 'lucide-react';
@@ -38,6 +41,24 @@ export const STAFF_MODULES: StaffModuleConfig[] = [
         border: 'border-sky-500/30',
     },
     {
+        slug:  'opc',
+        label: 'OPC',
+        description: 'Phòng khám Ngoại trú (ARV)',
+        icon: HeartPulse,
+        color: 'text-pink-400',
+        bg: 'bg-pink-500/10',
+        border: 'border-pink-500/30',
+    },
+    {
+        slug:  'testing',
+        label: 'Xét nghiệm Khẳng định',
+        description: 'Hỗ trợ XNKĐ HIV',
+        icon: Microscope,
+        color: 'text-indigo-400',
+        bg: 'bg-indigo-500/10',
+        border: 'border-indigo-500/30',
+    },
+    {
         slug:  'surveillance',
         label: 'Surveillance',
         description: 'Giám sát dịch tễ',
@@ -45,6 +66,15 @@ export const STAFF_MODULES: StaffModuleConfig[] = [
         color: 'text-amber-400',
         bg: 'bg-amber-500/10',
         border: 'border-amber-500/30',
+    },
+    {
+        slug:  'management',
+        label: 'Quản lý',
+        description: 'Lãnh đạo & Điều hành',
+        icon: Briefcase,
+        color: 'text-amber-600',
+        bg: 'bg-amber-600/10',
+        border: 'border-amber-600/30',
     },
     {
         slug:  'comms',
