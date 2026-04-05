@@ -4,11 +4,10 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { useChat, Chat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import ConsentForm from '@/features/referrals/ConsentForm';
-import AivaLogo from '@/features/brand/AivaLogo';
-import { ShieldCheck, Send, User, Bot, Sparkles, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Send, User, Bot, AlertCircle, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 
 export default function PublicCarePage() {
-    // ── useChat API v3 (v6) với DefaultChatTransport ──────────────────────────
     const chatInstance = useMemo(() => new Chat({
         transport: new DefaultChatTransport({ api: '/api/public/chat' }),
     }), []);
@@ -21,11 +20,10 @@ export default function PublicCarePage() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const isLoading = status === 'streaming' || status === 'submitted';
 
-    // Tin nhắn chào mừng cục bộ
     const [localWelcome] = useState([{
         id: 'welcome',
         role: 'assistant' as const,
-        content: 'Xin chào, tôi là AI hỗ trợ từ hệ thống **AIVA**. Tôi ở đây để lắng nghe, chia sẻ và hỗ trợ bạn trong một không gian an toàn, hoàn toàn bảo mật về các vấn đề liên quan đến **HIV/AIDS**. Bạn cần tư vấn điều gì hôm nay?',
+        content: 'Xin chào, tôi là trợ lý AI từ hệ thống AIVA. Tôi ở đây để lắng nghe và hỗ trợ bạn trong một không gian an toàn, hoàn toàn bảo mật. Bạn cần tư vấn điều gì hôm nay?',
     }]);
 
     const allMessages = useMemo(() => {
@@ -73,55 +71,72 @@ export default function PublicCarePage() {
     };
 
     return (
-        <div className="flex flex-col h-screen bg-slate-50 font-sans selection:bg-rose-500/30">
-            {/* Header: Brand-focused */}
-            <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-sm sticky top-0 z-20">
-                <div className="max-w-4xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <AivaLogo size={42} showText={true} />
+        <div className="flex flex-col h-screen bg-white font-sans selection:bg-rose-500/20">
+            {/* Clean Header — Minimal, warm, trustworthy */}
+            <header className="bg-white border-b border-slate-100 sticky top-0 z-20">
+                <div className="max-w-3xl mx-auto px-6 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Link href="/" className="text-slate-400 hover:text-slate-600 transition-colors">
+                            <ArrowLeft className="w-5 h-5" />
+                        </Link>
+                        <div className="w-px h-6 bg-slate-100" />
+                        <div className="flex items-center gap-2.5">
+                            {/* Simple Ribbon icon for brand recognition */}
+                            <svg width="28" height="28" viewBox="0 0 100 100" fill="none" className="flex-shrink-0">
+                                <path
+                                    d="M50 20C40 20 32 28 32 38C32 45 35 50 40 55L25 85H38L50 63L62 85H75L60 55C65 50 68 45 68 38C68 28 60 20 50 20ZM50 30C54.4 30 58 33.6 58 38C58 42.4 54.4 46 50 46C45.6 46 42 42.4 42 38C42 33.6 45.6 30 50 30Z"
+                                    fill="#e11d48"
+                                />
+                            </svg>
+                            <div>
+                                <h1 className="text-base font-bold text-slate-800 tracking-tight leading-none">AIVA Care</h1>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                    <span className="relative flex h-1.5 w-1.5">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                                    </span>
+                                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Đang trực tuyến</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <button
                         onClick={() => setShowModal(true)}
-                        className="hidden sm:flex items-center gap-2 bg-rose-600 text-white hover:bg-rose-700 font-bold px-6 py-3 rounded-2xl transition-all shadow-lg shadow-rose-600/20 active:scale-95 text-sm"
+                        className="flex items-center gap-2 bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold px-4 py-2 rounded-xl transition-all text-xs uppercase tracking-wider"
                     >
                         <ShieldCheck className="w-4 h-4" />
-                        Đăng ký dịch vụ
-                    </button>
-                    
-                    <button
-                        onClick={() => setShowModal(true)}
-                        className="sm:hidden flex items-center justify-center w-12 h-12 bg-rose-600 text-white rounded-2xl shadow-lg shadow-rose-600/20 active:scale-90"
-                    >
-                        <ShieldCheck className="w-6 h-6" />
+                        <span className="hidden sm:inline">Kết nối chuyên gia</span>
                     </button>
                 </div>
             </header>
 
-            {/* Chat Area */}
-            <main className="flex-1 overflow-y-auto px-6 py-8">
-                <div className="max-w-3xl mx-auto space-y-8">
+            {/* Chat Area — Clean, spacious, accessible */}
+            <main className="flex-1 overflow-y-auto bg-slate-50/50 px-4 py-8">
+                <div className="max-w-3xl mx-auto space-y-6">
                     {allMessages.map((m: any) => {
                         const isUser = m.role === 'user';
                         const text = getMessageText(m);
                         
                         return (
-                            <div key={m.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'} items-end animate-in fade-in slide-in-from-bottom-4 duration-500`}>
+                            <div key={m.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'} items-end`}>
                                 {!isUser && (
-                                    <div className="mr-4 flex-shrink-0">
-                                        <AivaLogo size={32} showText={false} glow={false} />
+                                    <div className="w-8 h-8 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center mr-3 flex-shrink-0">
+                                        <Bot className="w-4 h-4 text-rose-500" />
                                     </div>
                                 )}
 
-                                <div className={`max-w-[85%] rounded-[24px] px-6 py-4 text-[16px] leading-[1.6] shadow-sm transition-all hover:shadow-md ${
+                                <div className={`max-w-[80%] rounded-2xl px-5 py-3.5 text-[15px] leading-relaxed ${
                                     isUser
-                                        ? 'bg-cyan-500 text-white rounded-br-none glow-secondary'
-                                        : 'bg-white border border-slate-100 text-slate-800 rounded-bl-none'
+                                        ? 'bg-slate-800 text-white rounded-br-sm'
+                                        : 'bg-white text-slate-700 rounded-bl-sm border border-slate-100 shadow-sm'
                                 }`}>
                                     {text}
                                 </div>
 
                                 {isUser && (
-                                    <div className="w-10 h-10 rounded-2xl bg-cyan-50 flex items-center justify-center ml-4 flex-shrink-0 shadow-inner">
-                                        <User className="w-5 h-5 text-cyan-600" />
+                                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center ml-3 flex-shrink-0">
+                                        <User className="w-4 h-4 text-slate-500" />
                                     </div>
                                 )}
                             </div>
@@ -129,14 +144,14 @@ export default function PublicCarePage() {
                     })}
 
                     {isLoading && (
-                        <div className="flex justify-start items-end animate-pulse">
-                            <div className="mr-4 flex-shrink-0">
-                                <AivaLogo size={32} showText={false} glow={false} />
+                        <div className="flex justify-start items-end">
+                            <div className="w-8 h-8 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center mr-3 flex-shrink-0">
+                                <Bot className="w-4 h-4 text-rose-500" />
                             </div>
-                            <div className="bg-white border border-slate-100 rounded-[24px] rounded-bl-none px-6 py-5 shadow-sm flex gap-2 items-center">
-                                <div className="w-2 h-2 rounded-full bg-rose-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                                <div className="w-2 h-2 rounded-full bg-rose-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                                <div className="w-2 h-2 rounded-full bg-rose-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                            <div className="bg-white rounded-2xl rounded-bl-sm px-5 py-4 border border-slate-100 shadow-sm flex gap-1.5 items-center">
+                                <div className="w-2 h-2 rounded-full bg-rose-300 animate-bounce" style={{ animationDelay: '0ms' }} />
+                                <div className="w-2 h-2 rounded-full bg-rose-300 animate-bounce" style={{ animationDelay: '150ms' }} />
+                                <div className="w-2 h-2 rounded-full bg-rose-300 animate-bounce" style={{ animationDelay: '300ms' }} />
                             </div>
                         </div>
                     )}
@@ -144,19 +159,18 @@ export default function PublicCarePage() {
                 </div>
             </main>
 
-            {/* Input Area */}
-            <footer className="p-6 bg-transparent">
-                <div className="max-w-3xl mx-auto relative group">
-                    <div className="absolute inset-0 bg-rose-500/5 blur-2xl rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity" />
-                    <div className="relative bg-white border border-slate-200 rounded-[28px] p-2 shadow-xl shadow-slate-200/50 flex items-end gap-2 transition-all group-focus-within:border-rose-200 group-focus-within:ring-4 group-focus-within:ring-rose-500/5">
+            {/* Input — Simple floating bar */}
+            <footer className="bg-white border-t border-slate-100 px-4 py-4">
+                <div className="max-w-3xl mx-auto">
+                    <div className="flex items-end gap-3 bg-slate-50 rounded-2xl p-2 border border-slate-200 focus-within:border-slate-300 focus-within:ring-2 focus-within:ring-slate-200/50 transition-all">
                         <textarea
-                            className="flex-1 bg-transparent border-0 rounded-2xl px-5 py-4 text-slate-800 placeholder:text-slate-400 focus:ring-0 focus:outline-none transition-all resize-none max-h-40 min-h-[56px] text-[16px] leading-relaxed"
-                            placeholder="Mời bạn chia sẻ vấn đề cần hỗ trợ..."
+                            className="flex-1 bg-transparent border-0 px-4 py-3 text-slate-800 placeholder:text-slate-400 focus:ring-0 focus:outline-none resize-none max-h-32 min-h-[44px] text-[15px] leading-relaxed"
+                            placeholder="Nhập câu hỏi của bạn..."
                             value={input}
                             onChange={(e) => {
                                 setInput(e.target.value);
                                 e.target.style.height = 'auto';
-                                e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
+                                e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
                             }}
                             onKeyDown={handleKeyDown}
                             disabled={isLoading}
@@ -166,18 +180,35 @@ export default function PublicCarePage() {
                             type="button"
                             onClick={handleSend}
                             disabled={isLoading || !input.trim()}
-                            className="w-12 h-12 rounded-[20px] bg-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-600/30 hover:bg-rose-500 active:scale-90 disabled:opacity-30 disabled:hover:bg-rose-600 transition-all m-1"
+                            className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center hover:bg-rose-500 active:scale-90 disabled:opacity-30 transition-all flex-shrink-0"
                         >
-                            <Send className="w-1.5 h-1.5 mr-0.5" /> {/* Use custom arrow or icon if needed */}
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+                            <Send className="w-4 h-4" />
                         </button>
                     </div>
+                    <p className="text-center text-[11px] text-slate-400 mt-3">
+                        Thông tin được bảo mật hoàn toàn · Không lưu trữ dữ liệu cá nhân
+                    </p>
                 </div>
             </footer>
 
+            {/* Toast */}
+            {toast && (
+                <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50">
+                    <div className={`rounded-xl px-5 py-3 shadow-lg flex items-center gap-3 border text-sm font-bold ${
+                        toast.type === 'success'
+                            ? 'bg-white border-emerald-100 text-emerald-700'
+                            : 'bg-white border-rose-100 text-rose-700'
+                    }`}>
+                        {toast.type === 'success' ? <ShieldCheck className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                        {toast.message}
+                    </div>
+                </div>
+            )}
+
+            {/* Consent Form Modal */}
             {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 animate-in fade-in duration-300">
-                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setShowModal(false)} />
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+                    <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm" onClick={() => setShowModal(false)} />
                     <div className="relative z-10 w-full max-w-lg">
                         <ConsentForm
                             onSuccess={handleReferralSuccess}
