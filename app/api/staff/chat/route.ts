@@ -81,15 +81,16 @@ export async function POST(req: Request) {
             throw new Error(`ChiaseGPU API Error (${res.status}): ${errorText}`);
         }
 
+        const encoder = new TextEncoder();
         const stream = new ReadableStream({
             async start(controller) {
-                if (!res.body) {
-                    controller.close();
-                    return;
-                }
+                if (!res.body) { controller.close(); return; }
                 const reader = res.body.getReader();
                 const decoder = new TextDecoder();
                 let buffer = '';
+
+                // Vercel AI Data Stream v1: start of message step
+                controller.enqueue(encoder.encode(`b:{"messageId":"msg-1"}\n`));
 
                 while (true) {
                     const { done, value } = await reader.read();
@@ -108,14 +109,18 @@ export async function POST(req: Request) {
                                 const data = JSON.parse(dataStr);
                                 const content = data.choices?.[0]?.delta?.content;
                                 if (content) {
-                                    controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(content)}\n`));
+                                    controller.enqueue(encoder.encode(`0:${JSON.stringify(content)}\n`));
                                 }
-                            } catch (e) {
+                            } catch {
                                 // Ignore unparsable chunks
                             }
                         }
                     }
                 }
+
+                // Vercel AI Data Stream v1: finish step + message (required to close the stream)
+                controller.enqueue(encoder.encode(`e:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0},"isContinued":false}\n`));
+                controller.enqueue(encoder.encode(`d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`));
                 controller.close();
             }
         });

@@ -1,5 +1,3 @@
-import { streamText } from 'ai';
-import { getAIProvider } from '@/services/ai/adapter';
 import { systemPrompts } from '@/services/ai/prompts/systemPrompts';
 
 // Allow streaming responses up to 30 seconds
@@ -10,10 +8,8 @@ export async function POST(req: Request) {
     try {
         const { messages } = await req.json();
 
-        // Lấy system prompt cho PUBLIC CARE
         const systemPrompt = systemPrompts.PUBLIC_CARE;
 
-        // Chỉ truyền các field chuẩn của OpenAI (role, content)
         const cleanedMessages = messages.map((m: any) => {
             let contentStr = '';
             if (typeof m.content === 'string') {
@@ -21,11 +17,7 @@ export async function POST(req: Request) {
             } else if (Array.isArray(m.parts)) {
                 contentStr = m.parts.filter((p: any) => p.type === 'text').map((p: any) => p.text || '').join('');
             }
-            // Một số AI backend (như 400 error tại chiasegpu) không chấp nhận content rỗng, phải thay bằng dấu cách
-            return {
-                role: m.role,
-                content: contentStr.trim() || ' '
-            };
+            return { role: m.role, content: contentStr.trim() || ' ' };
         });
 
         const res = await fetch('https://llm.chiasegpu.vn/v1/chat/completions', {
@@ -36,10 +28,7 @@ export async function POST(req: Request) {
             },
             body: JSON.stringify({
                 model: 'gemma-4-31b-it',
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    ...cleanedMessages
-                ],
+                messages: [{ role: 'system', content: systemPrompt }, ...cleanedMessages],
                 stream: true
             })
         });
@@ -49,20 +38,22 @@ export async function POST(req: Request) {
             throw new Error(`ChiaseGPU API Error (${res.status}): ${errorText}`);
         }
 
+        const encoder = new TextEncoder();
+
         const stream = new ReadableStream({
             async start(controller) {
-                if (!res.body) {
-                    controller.close();
-                    return;
-                }
+                if (!res.body) { controller.close(); return; }
                 const reader = res.body.getReader();
                 const decoder = new TextDecoder();
                 let buffer = '';
 
+                // Vercel AI Data Stream v1: start of message step
+                controller.enqueue(encoder.encode(`b:{"messageId":"msg-1"}\n`));
+
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
-                    
+
                     buffer += decoder.decode(value, { stream: true });
                     const lines = buffer.split('\n');
                     buffer = lines.pop() || '';
@@ -76,14 +67,19 @@ export async function POST(req: Request) {
                                 const data = JSON.parse(dataStr);
                                 const content = data.choices?.[0]?.delta?.content;
                                 if (content) {
-                                    controller.enqueue(new TextEncoder().encode(`0:${JSON.stringify(content)}\n`));
+                                    // Vercel AI Data Stream v1: text delta
+                                    controller.enqueue(encoder.encode(`0:${JSON.stringify(content)}\n`));
                                 }
-                            } catch (e) {
+                            } catch {
                                 // Ignore unparsable chunks
                             }
                         }
                     }
                 }
+
+                // Vercel AI Data Stream v1: finish step + message (required to close the stream)
+                controller.enqueue(encoder.encode(`e:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0},"isContinued":false}\n`));
+                controller.enqueue(encoder.encode(`d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`));
                 controller.close();
             }
         });
