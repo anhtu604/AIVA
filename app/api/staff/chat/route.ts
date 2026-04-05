@@ -56,7 +56,7 @@ export async function POST(req: Request) {
         });
 
         // ── 5. Trả về đúng chuẩn Vercel AI Data Stream Protocol ────────────────
-        return result.toDataStreamResponse();
+        return (result as any).toDataStreamResponse();
 
     } catch (error: any) {
         console.error("Error in staff chat API:", error);

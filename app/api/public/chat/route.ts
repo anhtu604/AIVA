@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
         // ── 5. Trả về đúng chuẩn Vercel AI Data Stream Protocol ────────────────
         // result.toDataStreamResponse() tự động xử lý X-Vercel-AI-Data-Stream: v1
-        return result.toDataStreamResponse();
+        return (result as any).toDataStreamResponse();
 
     } catch (error: any) {
         console.error("Error in public chat API:", error);
