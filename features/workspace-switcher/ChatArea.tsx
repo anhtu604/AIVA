@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useChat, Chat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { Send, Bot, User, AlertCircle, Sparkles, ShieldCheck } from 'lucide-react';
+import AivaLogo from '@/features/brand/AivaLogo';
+import { Send, User, AlertCircle, ShieldCheck } from 'lucide-react';
 
 interface ChatAreaProps {
     moduleSlug: string;
@@ -14,7 +15,6 @@ interface ChatAreaProps {
 }
 
 export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleBg, welcomeMessage }: ChatAreaProps) {
-    // ── useChat API v3 (v6) với DefaultChatTransport ──────────────────────────
     const chatInstance = useMemo(() => new Chat({
         transport: new DefaultChatTransport({
             api: '/api/staff/chat',
@@ -29,11 +29,10 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const isLoading = status === 'streaming' || status === 'submitted';
 
-    // Local welcome message per module
     const [localMessages] = useState([{
         id: `welcome-${moduleSlug}`,
         role: 'assistant' as const,
-        content: welcomeMessage ?? `Hệ thống đã sẵn sàng. Tôi là trợ lý AI chuyên môn cho module **${moduleLabel}**. Mời bạn nhập yêu cầu xử lý nghiệp vụ.`,
+        content: welcomeMessage ?? `Hệ thống đã sẵn sàng. Tôi là trợ lý AI chuyên môn **AIVA** cho module **${moduleLabel}**. Mời bạn nhập yêu cầu xử lý nghiệp vụ.`,
     }]);
 
     const allMessages = useMemo(() => {
@@ -50,7 +49,6 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
         const trimmed = input.trim();
         if (!trimmed || isLoading) return;
         setInput('');
-        
         if (textareaRef.current) textareaRef.current.style.height = 'auto';
         await sendMessage({ text: trimmed });
     };
@@ -72,20 +70,18 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
 
     return (
         <div className="flex flex-col h-full bg-slate-950 font-sans">
-            {/* Enterprise Dashboard Header */}
+            {/* Enterprise Dashboard Header with branding */}
             <div className="flex-shrink-0 px-6 py-5 border-b border-white/10 flex items-center justify-between bg-slate-900/40 backdrop-blur-xl">
                 <div className="flex items-center gap-4">
-                    <div className={`w-11 h-11 rounded-xl ${moduleBg} border border-white/10 flex items-center justify-center flex-shrink-0 shadow-lg`}>
-                        <Sparkles className={`w-5 h-5 ${moduleColor}`} />
-                    </div>
+                    <AivaLogo size={36} showText={false} glow={true} />
                     <div>
                         <div className="flex items-center gap-2">
-                            <h2 className="text-white font-bold text-base leading-none">AIVA Staff</h2>
-                            <div className="bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
-                                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">Active Module</span>
+                            <h2 className="text-white font-bold text-base leading-none tracking-tight">Hệ thống AIVA</h2>
+                            <div className="bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-md">
+                                <span className="text-[9px] font-bold text-rose-400 uppercase tracking-widest leading-none">Secured AI</span>
                             </div>
                         </div>
-                        <p className="text-slate-500 text-xs mt-1.5 font-medium">Đang xử lý: <span className={`${moduleColor} font-bold`}>{moduleLabel}</span></p>
+                        <p className="text-slate-500 text-xs mt-1.5 font-medium tracking-tight">Nghiệp vụ: <span className="text-cyan-400 font-bold uppercase">{moduleLabel}</span></p>
                     </div>
                 </div>
                 
@@ -93,9 +89,9 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
                     <div className="hidden md:flex flex-col items-end mr-2">
                         <div className="flex items-center gap-1.5">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hệ thống ổn định</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">AIVA Core Online</span>
                         </div>
-                        <p className="text-[10px] text-slate-600 mt-1 uppercase font-bold">Encrypted End-to-End</p>
+                        <p className="text-[10px] text-slate-600 mt-1 uppercase font-bold tracking-wider">Enterprise Edition</p>
                     </div>
                     <div className="h-10 w-px bg-white/5 mx-1" />
                     <button className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all">
@@ -104,7 +100,7 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
                 </div>
             </div>
 
-            {/* Message Feed: Data Dense / Compact */}
+            {/* Message Feed */}
             <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10">
                 {allMessages.map((m: any) => {
                     const isUser = m.role === 'user';
@@ -112,25 +108,23 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
                     
                     return (
                         <div key={m.id} className={`flex items-start gap-4 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
-                            {/* Avatar */}
-                            <div className={`
-                                w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 border mt-1
-                                ${isUser
-                                    ? 'bg-indigo-600/20 border-indigo-500/30'
-                                    : `${moduleBg} border-white/10`
-                                }
-                            `}>
+                            <div className="flex-shrink-0 mt-1">
                                 {isUser
-                                    ? <User className="w-4 h-4 text-indigo-400" />
-                                    : <Bot className={`w-4 h-4 ${moduleColor}`} />
+                                    ? (
+                                        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-cyan-600/20 border border-cyan-500/30">
+                                            <User className="w-4 h-4 text-cyan-400" />
+                                        </div>
+                                      )
+                                    : (
+                                        <AivaLogo size={32} showText={false} glow={false} />
+                                      )
                                 }
                             </div>
 
-                            {/* Bubble: Professional / Structured */}
                             <div className={`
                                 max-w-[80%] rounded-2xl px-5 py-3.5 text-[14px] leading-relaxed whitespace-pre-wrap shadow-xl
                                 ${isUser
-                                    ? 'bg-indigo-600 text-white rounded-tr-none border border-white/10'
+                                    ? 'bg-rose-600 text-white rounded-tr-none border border-white/10'
                                     : 'bg-slate-900 text-slate-200 rounded-tl-none border border-white/10'
                                 }
                             `}>
@@ -140,29 +134,26 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
                     );
                 })}
 
-                {/* Compact Typing Indicator */}
                 {isLoading && (
                     <div className="flex items-start gap-4">
-                        <div className={`w-8 h-8 rounded-lg ${moduleBg} border border-white/10 flex items-center justify-center flex-shrink-0 mt-1`}>
-                            <Bot className={`w-4 h-4 ${moduleColor}`} />
-                        </div>
+                        <AivaLogo size={32} showText={false} glow={false} />
                         <div className="bg-slate-900 border border-white/10 rounded-2xl rounded-tl-none px-5 py-4 flex gap-1.5 items-center shadow-xl">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-600 animate-bounce" style={{ animationDelay: '0ms' }} />
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-600 animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-600 animate-bounce" style={{ animationDelay: '300ms' }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-bounce" style={{ animationDelay: '300ms' }} />
                         </div>
                     </div>
                 )}
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Bar: Professional / Enterprise feel */}
-            <div className="flex-shrink-0 px-6 pb-6 pt-3 border-t border-white/10 bg-slate-900/30">
-                <div className="relative flex items-end gap-3 bg-slate-950 rounded-2xl border border-white/10 shadow-2xl pr-3 pl-5 py-3 focus-within:border-indigo-500/50 focus-within:ring-1 focus-within:ring-indigo-500/30 transition-all">
+            {/* Input Bar */}
+            <div className="flex-shrink-0 px-6 pb-6 pt-3 border-t border-white/10 bg-slate-900/30 font-sans">
+                <div className="relative flex items-end gap-3 bg-slate-950 rounded-2xl border border-white/10 shadow-2xl pr-3 pl-5 py-3 focus-within:border-rose-500/50 focus-within:ring-1 focus-within:ring-rose-500/30 transition-all">
                     <textarea
                         ref={textareaRef}
                         className="flex-1 bg-transparent text-slate-200 placeholder:text-slate-600 resize-none outline-none text-[14px] leading-relaxed min-h-[24px] max-h-40 py-2"
-                        placeholder={`Nhập yêu cầu cho module ${moduleLabel}... (Enter để gửi)`}
+                        placeholder={`Nhập yêu cầu thực thi module ${moduleLabel}...`}
                         value={input}
                         rows={1}
                         disabled={isLoading}
@@ -180,24 +171,13 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
                         className={`
                             flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg
                             ${!isLoading && input.trim()
-                                ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30 hover:scale-105 active:scale-95'
+                                ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/30 hover:scale-105 active:scale-95'
                                 : 'bg-slate-800 text-slate-600 cursor-not-allowed opacity-50'
                             }
                         `}
                     >
                         <Send className="w-4 h-4 ml-0.5" />
                     </button>
-                </div>
-                <div className="flex items-center justify-between mt-3 px-2">
-                    <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest flex items-center gap-1.5">
-                        <AlertCircle className="w-3 h-3" />
-                        AI có thể tạo ra thông tin không chính xác
-                    </p>
-                    <div className="flex gap-4">
-                        <button className="text-[10px] text-slate-600 font-bold uppercase tracking-widest hover:text-indigo-400 transition-colors">Yêu cầu đào tạo lại</button>
-                        <div className="w-px h-3 bg-white/5" />
-                        <button className="text-[10px] text-slate-600 font-bold uppercase tracking-widest hover:text-indigo-400 transition-colors">Báo cáo log</button>
-                    </div>
                 </div>
             </div>
         </div>

@@ -2,7 +2,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #0f172a; /* Slate 900 for better contrast */
+  --foreground: #0f172a; /* Slate 900 */
 }
 
 @theme inline {
@@ -11,11 +11,16 @@
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-outfit), var(--font-inter), sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
+
+  /* ── Brand Colors (from AI Logo) ───────────────────────────────────────── */
+  --color-brand-primary: #e11d48; /* Rose 600 - Ribbon Red */
+  --color-brand-secondary: #22d3ee; /* Cyan 400 - Neon IVA Blue */
+  --color-brand-accent: #a855f7; /* Purple 500 - Secondary glow */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #020617; /* Slate 950 */
+    --background: #020617; /* Slate 950 - Navy Backdrop */
     --foreground: #f8fafc; /* Slate 50 */
   }
 }
@@ -32,4 +37,15 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-outfit), var(--font-inter), sans-serif;
   letter-spacing: -0.02em;
+}
+
+/* Glow Utilities */
+.glow-primary {
+  box-shadow: 0 0 20px -5px rgba(225, 29, 72, 0.5);
+}
+.glow-secondary {
+  box-shadow: 0 0 20px -5px rgba(34, 211, 238, 0.5);
+}
+.text-glow-secondary {
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
 }
