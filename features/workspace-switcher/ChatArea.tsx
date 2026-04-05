@@ -1,18 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
-import { useChat, Chat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
+import { useState, useRef, useEffect } from 'react';
+import { useChat } from '@ai-sdk/react';
 import { Send, Bot, User, AlertCircle, Sparkles } from 'lucide-react';
-
-// ─── helpers ─────────────────────────────────────────────────────────────────
-function getTextFromParts(message: { parts?: any[] }): string {
-    if (!message.parts) return '';
-    return message.parts
-        .filter((p: any) => p.type === 'text')
-        .map((p: any) => p.text ?? '')
-        .join('');
-}
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface ChatAreaProps {
@@ -25,31 +15,27 @@ interface ChatAreaProps {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleBg, welcomeMessage }: ChatAreaProps) {
-    // Build a pre-seeded Chat instance per module slug
-    const chatInstance = useMemo(() => new Chat({
-        transport: new DefaultChatTransport({
-            api: '/api/staff/chat',
-            // Pass module slug in each request body so the backend knows which prompt to use
-            body: { module: moduleSlug },
-        }),
-        messages: [
-            {
-                id: `welcome-${moduleSlug}`,
-                role: 'assistant' as const,
-                parts: [{
-                    type: 'text' as const,
-                    text: welcomeMessage ?? `Xin chào! Tôi là AIVA Staff – module **${moduleLabel}**. Hãy cho tôi biết bạn cần hỗ trợ gì?`,
-                }],
-            }
-        ],
-    }), [moduleSlug]); // recreate if module changes
+    const { messages, input, handleInputChange, handleSubmit, status, append } = useChat({
+        api: '/api/staff/chat',
+        body: { module: moduleSlug },
+    });
 
-    const { messages, sendMessage, status } = useChat({ chat: chatInstance });
-
-    const [input, setInput] = useState('');
+    const isLoading = status === 'streaming' || status === 'submitted';
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const isLoading = status === 'streaming' || status === 'submitted';
+
+    // Gửi tin chào mừng khi component mount
+    const hasSentWelcome = useRef(false);
+    useEffect(() => {
+        if (!hasSentWelcome.current) {
+            hasSentWelcome.current = true;
+            append({
+                role: 'assistant',
+                content: welcomeMessage ?? `Xin chào! Tôi là AIVA Staff – module **${moduleLabel}**. Hãy cho tôi biết bạn cần hỗ trợ gì?`,
+            });
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Auto-scroll
     useEffect(() => {
@@ -63,18 +49,13 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
         }
     };
 
-    const handleSend = async () => {
-        const trimmed = input.trim();
-        if (!trimmed || isLoading) return;
-        setInput('');
-        resetTextarea();
-        await sendMessage({ text: trimmed });
-    };
-
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            handleSend();
+            if (!isLoading && input.trim()) {
+                resetTextarea();
+                handleSubmit(e as any);
+            }
         }
     };
 
@@ -98,12 +79,9 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
             {/* ── Messages ── */}
             <div className="flex-1 overflow-y-auto px-4 py-6 space-y-5 scrollbar-thin scrollbar-thumb-white/10">
                 {messages.map((m) => {
-                    const msg = m as any;
-                    const text = getTextFromParts(msg);
-                    const isUser = msg.role === 'user';
-
+                    const isUser = m.role === 'user';
                     return (
-                        <div key={msg.id} className={`flex items-end gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+                        <div key={m.id} className={`flex items-end gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
                             {/* Avatar */}
                             <div className={`
                                 w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 border
@@ -126,7 +104,7 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
                                     : 'bg-slate-800/80 text-slate-200 rounded-bl-sm border border-white/5 shadow-lg'
                                 }
                             `}>
-                                {text}
+                                {m.content}
                             </div>
                         </div>
                     );
@@ -150,7 +128,10 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
 
             {/* ── Input Bar ── */}
             <div className="flex-shrink-0 px-4 pb-5 pt-3 border-t border-white/5 bg-slate-900/50">
-                <div className="relative flex items-end gap-2 bg-slate-800 rounded-2xl border border-white/10 shadow-xl pr-2 pl-4 py-2 focus-within:border-indigo-500/50 focus-within:ring-1 focus-within:ring-indigo-500/30 transition-all">
+                <form
+                    onSubmit={(e) => { resetTextarea(); handleSubmit(e); }}
+                    className="relative flex items-end gap-2 bg-slate-800 rounded-2xl border border-white/10 shadow-xl pr-2 pl-4 py-2 focus-within:border-indigo-500/50 focus-within:ring-1 focus-within:ring-indigo-500/30 transition-all"
+                >
                     <textarea
                         ref={textareaRef}
                         className="flex-1 bg-transparent text-slate-200 placeholder:text-slate-500 resize-none outline-none text-[14px] leading-relaxed min-h-[24px] max-h-32 py-1.5"
@@ -159,15 +140,14 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
                         rows={1}
                         disabled={isLoading}
                         onChange={(e) => {
-                            setInput(e.target.value);
+                            handleInputChange(e);
                             e.target.style.height = 'auto';
                             e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
                         }}
                         onKeyDown={handleKeyDown}
                     />
                     <button
-                        type="button"
-                        onClick={handleSend}
+                        type="submit"
                         disabled={isLoading || !input.trim()}
                         className={`
                             flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200
@@ -179,7 +159,7 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
                     >
                         <Send className="w-4 h-4 ml-0.5" />
                     </button>
-                </div>
+                </form>
                 <p className="text-[11px] text-slate-600 text-center mt-2 flex items-center justify-center gap-1">
                     <AlertCircle className="w-3 h-3" />
                     Nội dung do AI tạo ra có thể chưa chính xác. Luôn kiểm tra với chuyên gia y tế.

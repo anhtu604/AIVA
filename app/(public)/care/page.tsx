@@ -1,47 +1,32 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
-import { useChat, Chat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
+import { useState, useRef, useEffect } from 'react';
+import { useChat } from '@ai-sdk/react';
 import ConsentForm from '@/features/referrals/ConsentForm';
 import { ShieldCheck, Send, User, Bot, Sparkles, AlertCircle } from 'lucide-react';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helper: lấy text thuần từ một mảng parts của UIMessage
-// UIMessage v3 không có `.content` mà có `.parts` (array of TextUIPart, etc.)
-// ─────────────────────────────────────────────────────────────────────────────
-function getTextFromMessage(message: { parts?: any[] }): string {
-    if (!message.parts) return '';
-    return message.parts
-        .filter((p: any) => p.type === 'text')
-        .map((p: any) => p.text ?? '')
-        .join('');
-}
-
 export default function PublicCarePage() {
-    // ── useChat API mới (ai-sdk v3): dùng Chat class + transport ──────────────────
-    // Chat class nhận messages pre-seeded, useChat nhận chat instance
-    const chatInstance = useMemo(() => new Chat({
-        transport: new DefaultChatTransport({ api: '/api/public/chat' }),
-        messages: [
-            {
-                id: 'welcome',
-                role: 'assistant' as const,
-                parts: [{ type: 'text' as const, text: 'Xin chào, tôi là AIVA Care. Tôi ở đây để lắng nghe, chia sẻ và hỗ trợ bạn trong một không gian an toàn, hoàn toàn bảo mật và không phán xét. Bạn đang gặp vấn đề gì về sức khỏe cần tư vấn?' }],
-            }
-        ]
-    }), []);
+    const { messages, input, handleInputChange, handleSubmit, status, append } = useChat({
+        api: '/api/public/chat',
+    });
 
-    const { messages, sendMessage, status } = useChat({ chat: chatInstance });
-
-    // Quản lý input thủ công vì useChat v3 không còn trả về input/handleInputChange
-    const [input, setInput] = useState('');
-
+    const isLoading = status === 'streaming' || status === 'submitted';
     const [showModal, setShowModal] = useState(false);
     const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const isLoading = status === 'streaming' || status === 'submitted';
+    // Gửi tin chào mừng khi component mount
+    const hasSentWelcome = useRef(false);
+    useEffect(() => {
+        if (!hasSentWelcome.current) {
+            hasSentWelcome.current = true;
+            append({
+                role: 'assistant',
+                content: 'Xin chào, tôi là AIVA Care. Tôi ở đây để lắng nghe, chia sẻ và hỗ trợ bạn trong một không gian an toàn, hoàn toàn bảo mật và không phán xét. Bạn đang gặp vấn đề gì về sức khỏe cần tư vấn?'
+            });
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Auto-scroll xuống tin nhắn mới nhất
     useEffect(() => {
@@ -58,19 +43,12 @@ export default function PublicCarePage() {
         showToastMsg('Cảm ơn bạn! Thông tin đã được chuyển tuyến an toàn. Chuyên gia sẽ sớm liên hệ với bạn.', 'success');
     };
 
-    // Gửi tin nhắn theo API mới của @ai-sdk/react v3
-    const handleSend = async () => {
-        const trimmed = input.trim();
-        if (!trimmed || isLoading) return;
-
-        setInput('');
-        await sendMessage({ text: trimmed });
-    };
-
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            handleSend();
+            if (!isLoading && input.trim()) {
+                handleSubmit(e as any);
+            }
         }
     };
 
@@ -118,11 +96,9 @@ export default function PublicCarePage() {
             <main className="flex-1 overflow-y-auto px-4 py-6">
                 <div className="max-w-4xl mx-auto space-y-6">
                     {messages.map(m => {
-                        const msg = m as any;
-                        const text = getTextFromMessage(msg);
-                        const isUser = msg.role === 'user';
+                        const isUser = m.role === 'user';
                         return (
-                            <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'} items-end`}>
+                            <div key={m.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'} items-end`}>
                                 {!isUser && (
                                     <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-3 flex-shrink-0 shadow-sm border border-indigo-200">
                                         <Bot className="w-4 h-4 text-indigo-600" />
@@ -134,7 +110,7 @@ export default function PublicCarePage() {
                                         ? 'bg-indigo-600 text-white rounded-br-sm'
                                         : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm'
                                 }`}>
-                                    {text}
+                                    {m.content}
                                 </div>
 
                                 {isUser && (
@@ -166,30 +142,24 @@ export default function PublicCarePage() {
             {/* Input Area */}
             <footer className="bg-white border-t border-slate-200 p-4">
                 <div className="max-w-4xl mx-auto">
-                    <div className="relative flex items-end gap-2">
+                    <form onSubmit={handleSubmit} className="relative flex items-end gap-2">
                         <textarea
                             className="w-full bg-slate-100 border-0 rounded-2xl px-5 py-4 pr-14 text-slate-800 placeholder:text-slate-500 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all resize-none shadow-inner max-h-32 min-h-[56px] text-[15px]"
                             placeholder="Nhập tin nhắn để được tư vấn..."
                             value={input}
-                            onChange={(e) => {
-                                setInput(e.target.value);
-                                // Auto-resize height
-                                e.target.style.height = 'auto';
-                                e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
-                            }}
+                            onChange={handleInputChange}
                             onKeyDown={handleKeyDown}
                             disabled={isLoading}
                             rows={1}
                         />
                         <button
-                            type="button"
-                            onClick={handleSend}
+                            type="submit"
                             disabled={isLoading || !input.trim()}
                             className="absolute right-2 bottom-2 w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md hover:bg-indigo-700 disabled:opacity-50 disabled:hover:bg-indigo-600 transition-colors"
                         >
                             <Send className="w-4 h-4 ml-0.5" />
                         </button>
-                    </div>
+                    </form>
                     <div className="text-center mt-3">
                         <button
                             onClick={() => setShowModal(true)}
