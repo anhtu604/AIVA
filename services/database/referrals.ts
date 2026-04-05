@@ -1,5 +1,6 @@
 'use server';
 
+import { z } from 'zod';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { createClient as createSsrClient } from '@/lib/supabase/server';
 
@@ -19,17 +20,27 @@ export interface ReferralPayload {
     sessionId?: string;
     targetOrgId: string;
     phone: string;
+    fullName?: string;
     consentGiven: boolean;
     riskData?: Record<string, any>;
 }
 
-export async function createReferral(payload: ReferralPayload) {
-    if (!payload.consentGiven) {
-        throw new Error("Người dùng chưa đồng ý chia sẻ thông tin (Consent is required).");
-    }
+const referralSchema = z.object({
+    sessionId: z.string().optional(),
+    targetOrgId: z.string().min(1, "Thiếu thông tin Đơn vị tiếp nhận."),
+    phone: z.string().regex(/^[0-9]{10}$/, "Số điện thoại không hợp lệ. Vui lòng nhập đúng 10 chữ số."),
+    fullName: z.string().regex(/^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂẾưăạảấầẩẫậắằẳẵặẹẻẽềềểếỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵỷỹ\s]*$/, "Họ tên không được chứa ký tự đặc biệt hoặc số.").optional(),
+    consentGiven: z.boolean().refine(val => val === true, "Người dùng chưa đồng ý chia sẻ thông tin (Consent is required)."),
+    riskData: z.record(z.string(), z.any()).optional()
+});
 
-    if (!payload.phone || !payload.targetOrgId) {
-        throw new Error("Thiếu thông tin liên hệ hoặc thiếu thông tin Đơn vị tiếp nhận.");
+export async function createReferral(payload: ReferralPayload) {
+    // 1. Zod Validation
+    const parsed = referralSchema.safeParse(payload);
+    if (!parsed.success) {
+        // Trả về thông báo lỗi đầu tiên củ Zod
+        const errorMessage = parsed.error.issues[0]?.message || 'Dữ liệu không hợp lệ.';
+        throw new Error(errorMessage);
     }
 
     // Insert dữ liệu
