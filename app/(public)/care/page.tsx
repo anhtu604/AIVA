@@ -1,4 +1,4 @@
-'use chat';
+'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useChat, Chat } from '@ai-sdk/react';
