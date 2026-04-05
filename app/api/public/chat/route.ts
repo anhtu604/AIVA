@@ -13,6 +13,12 @@ export async function POST(req: Request) {
         // Lấy system prompt cho PUBLIC CARE
         const systemPrompt = systemPrompts.PUBLIC_CARE;
 
+        // Chỉ truyền các field chuẩn của OpenAI (role, content), loại bỏ các field thừa của Vercel UI (id, createdAt...)
+        const cleanedMessages = messages.map((m: any) => ({
+            role: m.role,
+            content: m.content
+        }));
+
         const res = await fetch('https://llm.chiasegpu.vn/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -23,7 +29,7 @@ export async function POST(req: Request) {
                 model: 'gemma-4-31b-it',
                 messages: [
                     { role: 'system', content: systemPrompt },
-                    ...messages
+                    ...cleanedMessages
                 ],
                 stream: true
             })

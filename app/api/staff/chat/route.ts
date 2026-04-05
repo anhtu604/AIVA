@@ -46,6 +46,11 @@ export async function POST(req: Request) {
 
     // ── 4. Gọi AI và stream kết quả ───────────────────────────────────────────
     try {
+        const cleanedMessages = messages.map((m: any) => ({
+            role: m.role,
+            content: m.content
+        }));
+
         const res = await fetch('https://llm.chiasegpu.vn/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -56,7 +61,7 @@ export async function POST(req: Request) {
                 model: 'gemma-4-31b-it',
                 messages: [
                     { role: 'system', content: systemPrompt },
-                    ...messages
+                    ...cleanedMessages
                 ],
                 stream: true
             })
