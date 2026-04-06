@@ -1,15 +1,11 @@
-import { streamText } from 'ai';
-import { getAIProvider } from '@/services/ai/adapter';
-import { systemPrompts } from '@/services/ai/prompts/systemPrompts';
 import { createClient } from '@/lib/supabase/server';
 
-// Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
     try {
-        // ── 1. Auth guard (Staff only) ────────────────────────────────────────
+        // 1. Auth guard (Staff only)
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
 
@@ -20,43 +16,45 @@ export async function POST(req: Request) {
             });
         }
 
-        const { messages, module } = await req.json();
+        const { query, conversation_id, module } = await req.json();
 
-        // ── 2. Chọn System Prompt dựa trên module ──────────────────────────
-        let systemPrompt = systemPrompts.STAFF_GENERAL;
-        if (module === 'trinh-tu-nhap-lieu') {
-            systemPrompt = systemPrompts.TRINH_TU_NHAP_LIEU;
-        } else if (module === 'tu-van-chuyen-tuyen') {
-            systemPrompt = systemPrompts.TU_VAN_CHUYEN_TUYEN;
+        // 2. Proxy to Dify API
+        const difyUrl = `${process.env.DIFY_API_URL}/chat-messages`;
+        const difyKey = process.env.DIFY_STAFF_API_KEY;
+
+        const payload = {
+            inputs: {
+                // Pass module slug to Dify if the agent needs to know which module is active
+                module_slug: module || 'staff-general', 
+            },
+            query,
+            response_mode: 'streaming',
+            conversation_id: conversation_id || '',
+            user: user.id || 'staff-user',
+        };
+
+        const response = await fetch(difyUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${difyKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Dify API error: ${response.status} ${errorText}`);
         }
 
-        // ── 3. Rửa dữ liệu: Chuyển mảng parts của SDK v3 thành text chuỗi ───────
-        const cleanedMessages = messages.map((m: any) => {
-            let contentStr = '';
-            if (typeof m.content === 'string') {
-                contentStr = m.content;
-            } else if (Array.isArray(m.parts)) {
-                contentStr = m.parts
-                    .filter((p: any) => p.type === 'text')
-                    .map((p: any) => p.text || '')
-                    .join('');
-            }
-            return {
-                role: m.role,
-                content: contentStr.trim() || ' '
-            };
+        // Return the SSE stream directly
+        return new Response(response.body, {
+            headers: {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+            },
         });
-
-        // ── 4. Thực hiện streamText chính thống ───────────────────────────────
-        const model = getAIProvider();
-        const result = await streamText({
-            model,
-            system: systemPrompt,
-            messages: cleanedMessages,
-        });
-
-        // ── 5. Trả về đúng chuẩn Vercel AI Data Stream Protocol ────────────────
-        return (result as any).toDataStreamResponse();
 
     } catch (error: any) {
         console.error("Error in staff chat API:", error);

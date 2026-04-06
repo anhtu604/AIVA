@@ -1,49 +1,44 @@
-import { streamText } from 'ai';
-import { getAIProvider } from '@/services/ai/adapter';
-import { systemPrompts } from '@/services/ai/prompts/systemPrompts';
-
-// Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
     try {
-        const { messages } = await req.json();
+        const { query, conversation_id } = await req.json();
 
-        // ── 1. Lấy model đã cấu hình interceptor ──────────────────────────────
-        const model = getAIProvider();
+        // Proxy to Dify API
+        const difyUrl = `${process.env.DIFY_API_URL}/chat-messages`;
+        const difyKey = process.env.DIFY_CARE_API_KEY;
 
-        // ── 2. Lấy system prompt cho PUBLIC CARE ─────────────────────────────
-        const systemPrompt = systemPrompts.PUBLIC_CARE;
+        const payload = {
+            inputs: {},
+            query,
+            response_mode: 'streaming',
+            conversation_id: conversation_id || '',
+            user: 'public-user',
+        };
 
-        // ── 3. Rửa dữ liệu: Chuyển mảng parts của SDK v3 thành text chuỗi ───────
-        // Một số AI backend không chấp nhận content rỗng, phải thay bằng dấu cách
-        const cleanedMessages = messages.map((m: any) => {
-            let contentStr = '';
-            if (typeof m.content === 'string') {
-                contentStr = m.content;
-            } else if (Array.isArray(m.parts)) {
-                contentStr = m.parts
-                    .filter((p: any) => p.type === 'text')
-                    .map((p: any) => p.text || '')
-                    .join('');
-            }
-            return {
-                role: m.role,
-                content: contentStr.trim() || ' '
-            };
+        const response = await fetch(difyUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${difyKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
         });
 
-        // ── 4. Thực hiện streamText chính thống ───────────────────────────────
-        const result = await streamText({
-            model,
-            system: systemPrompt,
-            messages: cleanedMessages,
-        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Dify API error: ${response.status} ${errorText}`);
+        }
 
-        // ── 5. Trả về đúng chuẩn Vercel AI Data Stream Protocol ────────────────
-        // result.toDataStreamResponse() tự động xử lý X-Vercel-AI-Data-Stream: v1
-        return (result as any).toDataStreamResponse();
+        // Return the SSE stream directly
+        return new Response(response.body, {
+            headers: {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+            },
+        });
 
     } catch (error: any) {
         console.error("Error in public chat API:", error);

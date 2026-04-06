@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { useChat, Chat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
+import { useDifyChat } from '@/hooks/useDifyChat';
 import AivaLogo from '@/features/brand/AivaLogo';
 import { Send, User, AlertCircle, ShieldCheck } from 'lucide-react';
 
@@ -15,19 +14,14 @@ interface ChatAreaProps {
 }
 
 export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleBg, welcomeMessage }: ChatAreaProps) {
-    const chatInstance = useMemo(() => new Chat({
-        transport: new DefaultChatTransport({
-            api: '/api/staff/chat',
-            body: { module: moduleSlug },
-        }),
-    }), [moduleSlug]);
-
-    const { messages, sendMessage, status } = useChat({ chat: chatInstance });
-    
+    const { messages, sendMessage, status, isLoading } = useDifyChat({ 
+        api: '/api/staff/chat',
+        moduleSlug: moduleSlug,
+        initialMessages: []
+    });
     const [input, setInput] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const isLoading = status === 'streaming' || status === 'submitted';
 
     const [localMessages] = useState([{
         id: `welcome-${moduleSlug}`,
@@ -36,8 +30,8 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
     }]);
 
     const allMessages = useMemo(() => {
-        const sdkIds = new Set(messages.map((m: any) => m.id));
-        const welcomeFiltered = localMessages.filter(m => !sdkIds.has(m.id));
+        const difyIds = new Set(messages.map((m: any) => m.id));
+        const welcomeFiltered = localMessages.filter(m => !difyIds.has(m.id));
         return [...welcomeFiltered, ...messages];
     }, [messages, localMessages]);
 
@@ -61,11 +55,7 @@ export default function ChatArea({ moduleSlug, moduleLabel, moduleColor, moduleB
     };
 
     const getMessageText = (m: any) => {
-        if (typeof m.content === 'string') return m.content;
-        if (Array.isArray(m.parts)) {
-            return m.parts.filter((p: any) => p.type === 'text').map((p: any) => p.text || '').join('');
-        }
-        return '';
+        return m.content || '';
     };
 
     return (

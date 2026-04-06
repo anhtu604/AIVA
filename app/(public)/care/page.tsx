@@ -1,24 +1,20 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { useChat, Chat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
+import { useDifyChat } from '@/hooks/useDifyChat';
 import ConsentForm from '@/features/referrals/ConsentForm';
 import { ShieldCheck, Send, User, Bot, AlertCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 export default function PublicCarePage() {
-    const chatInstance = useMemo(() => new Chat({
-        transport: new DefaultChatTransport({ api: '/api/public/chat' }),
-    }), []);
-
-    const { messages, sendMessage, status } = useChat({ chat: chatInstance });
-    
+    const { messages, sendMessage, status, isLoading } = useDifyChat({ 
+        api: '/api/public/chat',
+        initialMessages: []
+    });
     const [input, setInput] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const isLoading = status === 'streaming' || status === 'submitted';
 
     const [localWelcome] = useState([{
         id: 'welcome',
@@ -27,8 +23,8 @@ export default function PublicCarePage() {
     }]);
 
     const allMessages = useMemo(() => {
-        const sdkIds = new Set(messages.map((m: any) => m.id));
-        const welcomeFiltered = localWelcome.filter(m => !sdkIds.has(m.id));
+        const difyIds = new Set(messages.map((m: any) => m.id));
+        const welcomeFiltered = localWelcome.filter(m => !difyIds.has(m.id));
         return [...welcomeFiltered, ...messages];
     }, [messages, localWelcome]);
 
@@ -63,11 +59,7 @@ export default function PublicCarePage() {
     };
 
     const getMessageText = (m: any) => {
-        if (typeof m.content === 'string') return m.content;
-        if (Array.isArray(m.parts)) {
-            return m.parts.filter((p: any) => p.type === 'text').map((p: any) => p.text || '').join('');
-        }
-        return '';
+        return m.content || '';
     };
 
     return (
