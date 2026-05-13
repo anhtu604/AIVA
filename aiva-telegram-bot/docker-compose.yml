@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  main-bot:
+    build: .
+    container_name: aiva-main-bot
+    env_file:
+      - .env
+    restart: unless-stopped

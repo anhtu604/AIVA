@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Nguyễn Thị Lan",
+    "phone": "0987654321",
+    "areas": ["quận 1", "quận 3", "quận 5", "hồ chí minh", "hcm", "tphcm", "saigon"],
+    "telegram_id": "YOUR_TELEGRAM_ID_HERE"
+  },
+  {
+    "name": "Trần Văn Hùng",
+    "phone": "0912345678",
+    "areas": ["hà nội", "hoàn kiếm", "đống đa", "ba đình", "cầu giấy"],
+    "telegram_id": "YOUR_TELEGRAM_ID_HERE"
+  }
+]

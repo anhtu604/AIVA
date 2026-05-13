@@ -1,0 +1,145 @@
+# Master Docker Compose — chạy toàn bộ custom services của AIVA
+# Dify chạy riêng: cd dify/docker && docker compose up -d
+# Custom services: docker compose up -d (từ thư mục gốc)
+
+networks:
+  aiva-net:
+    driver: bridge
+
+services:
+
+  # ─────────────────────────────────────────────
+  # 1. Knowledge API (Flask) — port 8000
+  # ─────────────────────────────────────────────
+  knowledge-api:
+    build: ./external-knowledge-api
+    container_name: aiva-knowledge-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./external-knowledge-api/knowledge.db:/app/knowledge.db
+    environment:
+      - KB_ALLOWED_KEYS=sk-aiva-external-knowledge-secret-key|dataset-KhssPvf20q75fvA40Bw3nOLr
+    restart: unless-stopped
+    networks:
+      - aiva-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ─────────────────────────────────────────────
+  # 2. Escalation API (FastAPI) — port 8001
+  # ─────────────────────────────────────────────
+  escalation-api:
+    build: ./escalation-api
+    container_name: aiva-escalation-api
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./escalation-api/aiva_escalation.db:/app/aiva_escalation.db
+      - ./escalation-api/counselors.json:/app/counselors.json
+    env_file:
+      - ./escalation-api/.env
+    environment:
+      - EXTERNAL_KB_URL=http://knowledge-api:8000
+    depends_on:
+      - knowledge-api
+    restart: unless-stopped
+    networks:
+      - aiva-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ─────────────────────────────────────────────
+  # 3. LLM Proxy (Node.js/Express) — port 20129
+  # ─────────────────────────────────────────────
+  proxy:
+    build: ./dify-9router-proxy
+    container_name: aiva-9router-proxy
+    ports:
+      - "20129:20129"
+    env_file:
+      - ./dify-9router-proxy/.env
+    restart: unless-stopped
+    networks:
+      - aiva-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ─────────────────────────────────────────────
+  # 4. AIVA Care Bot (public chatbot)
+  # ─────────────────────────────────────────────
+  care-bot:
+    build: ./aiva-telegram-bot
+    container_name: aiva-care-bot
+    env_file:
+      - ./aiva-telegram-bot/.env
+    environment:
+      - EXTERNAL_KNOWLEDGE_URL=http://knowledge-api:8000
+    depends_on:
+      - knowledge-api
+    restart: unless-stopped
+    networks:
+      - aiva-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ─────────────────────────────────────────────
+  # 5. Admin Bot (quản lý SA/Admin/TVV)
+  # ─────────────────────────────────────────────
+  admin-bot:
+    build: ./escalation-api
+    container_name: aiva-admin-bot
+    command: ["python", "admin_bot.py"]
+    volumes:
+      - ./escalation-api/aiva_escalation.db:/app/aiva_escalation.db
+    env_file:
+      - ./escalation-api/.env
+    depends_on:
+      - escalation-api
+    restart: unless-stopped
+    networks:
+      - aiva-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ─────────────────────────────────────────────
+  # 6. Staff Bot (nhân viên nội bộ)
+  # ─────────────────────────────────────────────
+  staff-bot:
+    build: ./escalation-api
+    container_name: aiva-staff-bot
+    command: ["python", "staff_bot.py"]
+    volumes:
+      - ./escalation-api/aiva_escalation.db:/app/aiva_escalation.db
+    env_file:
+      - ./escalation-api/.env
+    depends_on:
+      - escalation-api
+    restart: unless-stopped
+    networks:
+      - aiva-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ─────────────────────────────────────────────
+  # 7. Trainer Bot (huấn luyện AI)
+  # ─────────────────────────────────────────────
+  trainer-bot:
+    build: ./escalation-api
+    container_name: aiva-trainer-bot
+    command: ["python", "trainer_bot.py"]
+    volumes:
+      - ./escalation-api/aiva_escalation.db:/app/aiva_escalation.db
+    env_file:
+      - ./escalation-api/.env
+    environment:
+      - EXTERNAL_KB_URL=http://knowledge-api:8000
+      - ROUTER_API_URL=http://proxy:20129/v1/chat/completions
+    depends_on:
+      - knowledge-api
+      - proxy
+    restart: unless-stopped
+    networks:
+      - aiva-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

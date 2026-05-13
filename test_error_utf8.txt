@@ -1,2 +1,0 @@
-﻿../test3.tsx(1,25): error TS2307: Cannot find module '@ai-sdk/react' or its corresponding type declarations.
-../test3.tsx(2,49): error TS2307: Cannot find module 'ai' or its corresponding type declarations.

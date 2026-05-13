@@ -1,0 +1,9 @@
+# ⚠️  FILE NÀY ĐÃ LỖI THỜI — KHÔNG SỬ DỤNG
+#
+# Dùng master docker-compose.yml ở thư mục gốc C:\AIVA:
+#
+#   cd C:\AIVA
+#   docker compose up -d --build
+#
+# File này chỉ được giữ lại để tham khảo cấu hình cũ.
+# Xem C:\AIVA\docker-compose.yml để biết cấu hình hiện tại.
