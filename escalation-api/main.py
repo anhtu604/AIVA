@@ -20,6 +20,7 @@ API_KEY = os.getenv("API_KEY")
 if not API_KEY:
     raise RuntimeError("API_KEY environment variable is required")
 ADMIN_BOT_TOKEN = os.getenv("ADMIN_BOT_TOKEN")
+STAFF_BOT_TOKEN = os.getenv("STAFF_BOT_TOKEN")
 
 # Setup Logger
 structlog.configure(
@@ -41,7 +42,16 @@ app = FastAPI(
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 def verify_api_key(api_key: str = Security(api_key_header)):
-    if not api_key or api_key != API_KEY:
+    if not api_key:
+        raise HTTPException(status_code=403, detail="Could not validate credentials")
+    
+    # Strip common prefixes (like 'custom ', 'bearer ', 'token ')
+    actual_key = api_key
+    for prefix in ["custom ", "bearer ", "token "]:
+        if actual_key.lower().startswith(prefix):
+            actual_key = actual_key[len(prefix):].strip()
+            
+    if actual_key != API_KEY:
         raise HTTPException(status_code=403, detail="Could not validate credentials")
     return api_key
 
@@ -114,12 +124,12 @@ def find_best_counselor(address: str, counselors: List[Counselor]) -> Optional[C
     return best if best else counselors[0]
 
 def send_telegram_notification(counselor: Counselor, payload: EscalationRequest, province_name: str) -> bool:
-    """Gửi thông báo ca mới cho TVV qua Admin Bot."""
-    if not ADMIN_BOT_TOKEN or not counselor.telegram_id:
+    """Gửi thông báo ca mới cho TVV qua Staff Bot."""
+    if not STAFF_BOT_TOKEN or not counselor.telegram_id:
         logger.warning("missing_telegram_config", counselor=counselor.name)
         return False
 
-    url = f"https://api.telegram.org/bot{ADMIN_BOT_TOKEN}/sendMessage"
+    url = f"https://api.telegram.org/bot{STAFF_BOT_TOKEN}/sendMessage"
 
     message = (
         f"🚨 <b>THÔNG BÁO CA TƯ VẤN MỚI</b> 🚨\n\n"

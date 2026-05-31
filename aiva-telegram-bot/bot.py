@@ -62,17 +62,29 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user_id in user_conversations:
         payload["conversation_id"] = user_conversations[user_id]
         
+    payload["response_mode"] = "streaming"
+    
     try:
-        response = requests.post(dify_url, json=payload, headers=headers, timeout=60)
+        response = requests.post(dify_url, json=payload, headers=headers, stream=True, timeout=60)
         response.raise_for_status()
-        data = response.json()
         
-        # Extract the bot's reply from Dify
-        answer = data.get("answer", "Xin lỗi, mình không có câu trả lời vào lúc này.")
+        answer = ""
+        for line in response.iter_lines():
+            if line:
+                decoded_line = line.decode('utf-8')
+                if decoded_line.startswith('data: '):
+                    try:
+                        data = json.loads(decoded_line[6:])
+                        event = data.get("event")
+                        if event in ["message", "agent_message"]:
+                            answer += data.get("answer", "")
+                        if "conversation_id" in data:
+                            user_conversations[user_id] = data["conversation_id"]
+                    except Exception:
+                        pass
         
-        # Save the conversation ID for future messages to keep the context
-        if "conversation_id" in data:
-            user_conversations[user_id] = data["conversation_id"]
+        if not answer:
+            answer = "Xin lỗi, mình không có câu trả lời vào lúc này."
         
         # Detect khi AI không trả lời được → forward cho Trainer
         NO_ANSWER_PHRASES = [

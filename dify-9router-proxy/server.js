@@ -33,6 +33,7 @@ app.get('/v1/models', async (req, res) => {
 app.post('/v1/chat/completions', async (req, res) => {
     try {
         const payload = { ...req.body };
+        console.log("[Proxy Request Payload]:", JSON.stringify({ ...payload, messages: payload.messages ? `[${payload.messages.length} messages]` : undefined }, null, 2));
         const isStreamingRequested = payload.stream === true;
         
         // If stream is false or undefined, explicitly ensure it is false for 9router

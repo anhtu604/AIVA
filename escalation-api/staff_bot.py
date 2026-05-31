@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
-from database import SessionLocal, engine, Base, Staff, StaffCategory
+from database import SessionLocal, engine, Base, Staff, StaffCategory, Counselor, Province
 
 Base.metadata.create_all(bind=engine)
 
@@ -49,7 +49,15 @@ def get_staff(telegram_id: str):
         ).first()
         if s:
             categories = [c.knowledge_id for c in s.categories]
-            return {"name": s.name, "categories": categories}
+            return {"name": s.name, "categories": categories, "role": "staff"}
+        
+        c = db.query(Counselor).filter(
+            Counselor.telegram_id == telegram_id,
+            Counselor.activated == True
+        ).first()
+        if c:
+            return {"name": c.name, "categories": ["counselor"], "role": "counselor"}
+            
         return None
     finally:
         db.close()
@@ -59,13 +67,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     await update.message.reply_html(
         rf"Xin chào {user.mention_html()}! Mình là AIVA Staff Bot. "
-        rf"Vui lòng kích hoạt tài khoản bằng lệnh: /kichhoat STF-XXXXXX"
+        rf"Vui lòng kích hoạt tài khoản bằng lệnh: /kichhoat STF-XXXXXX hoặc /kichhoat TVV-XXXXXX"
     )
 
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "📖 HƯỚNG DẪN SỬ DỤNG:\n\n"
-        "🔑 /kichhoat <mã STF-...> — Kích hoạt tài khoản Staff\n"
+        "🔑 /kichhoat <mã STF-... hoặc TVV-...> — Kích hoạt tài khoản Staff / TVV\n"
         "ℹ️ /thongtin — Xem thông tin tài khoản\n"
         "💬 Nhắn tin bình thường để hỏi đáp với AI"
     )
@@ -81,45 +89,71 @@ async def kichhoat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     db = get_db()
 
     try:
-        if not code.startswith("STF-"):
-            await update.message.reply_text("❌ Mã Staff phải bắt đầu bằng STF-.")
+        if not code.startswith("STF-") and not code.startswith("TVV-"):
+            await update.message.reply_text("❌ Mã kích hoạt phải bắt đầu bằng STF- hoặc TVV-.")
             return
 
-        staff = db.query(Staff).filter(Staff.activation_code == code).first()
-        if not staff:
-            await update.message.reply_text("❌ Mã kích hoạt không hợp lệ.")
-            return
-        if staff.activated:
-            await update.message.reply_text(f"⚠️ Mã này đã được kích hoạt bởi: {staff.name}.")
-            return
+        if code.startswith("STF-"):
+            staff = db.query(Staff).filter(Staff.activation_code == code).first()
+            if not staff:
+                await update.message.reply_text("❌ Mã kích hoạt không hợp lệ.")
+                return
+            if staff.activated:
+                await update.message.reply_text(f"⚠️ Mã này đã được kích hoạt bởi: {staff.name}.")
+                return
 
-        staff.telegram_id = telegram_id
-        staff.name = user_name
-        staff.activated = True
-        db.commit()
+            staff.telegram_id = telegram_id
+            staff.name = user_name
+            staff.activated = True
+            db.commit()
 
-        categories = [c.knowledge_id for c in staff.categories]
-        cat_str = ", ".join(categories) if categories else "(chưa gán)"
+            categories = [c.knowledge_id for c in staff.categories]
+            cat_str = ", ".join(categories) if categories else "(chưa gán)"
 
-        await update.message.reply_text(
-            f"✅ Kích hoạt Staff thành công!\n\n"
-            f"👤 Nhân viên: {user_name}\n"
-            f"📚 Quyền tra cứu: {cat_str}\n\n"
-            f"Bây giờ bạn có thể chat trực tiếp với AI!"
-        )
+            await update.message.reply_text(
+                f"✅ Kích hoạt Staff thành công!\n\n"
+                f"👤 Nhân viên: {user_name}\n"
+                f"📚 Quyền tra cứu: {cat_str}\n\n"
+                f"Bây giờ bạn có thể chat trực tiếp với AI!"
+            )
+        elif code.startswith("TVV-"):
+            counselor = db.query(Counselor).filter(Counselor.activation_code == code).first()
+            if not counselor:
+                await update.message.reply_text("❌ Mã kích hoạt không hợp lệ.")
+                return
+            if counselor.activated:
+                await update.message.reply_text("⚠️ Mã này đã được kích hoạt trước đó.")
+                return
+
+            counselor.telegram_id = telegram_id
+            counselor.activated = True
+            db.commit()
+
+            province = db.query(Province).filter(Province.id == counselor.province_id).first()
+            areas_str = ", ".join([a.area_name for a in counselor.areas])
+
+            await update.message.reply_text(
+                f"✅ Kích hoạt TVV thành công!\n\n"
+                f"👤 TVV: {counselor.name}\n"
+                f"📞 SĐT: {counselor.phone}\n"
+                f"🏛️ Tỉnh: {province.name if province else 'N/A'}\n"
+                f"📍 Khu vực: {areas_str}\n\n"
+                f"Từ giờ bạn sẽ nhận được thông báo khi có ca tư vấn mới trong khu vực của mình."
+            )
     finally:
         db.close()
 
 async def thongtin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     telegram_id = str(update.effective_user.id)
-    staff = get_staff(telegram_id)
+    user_info = get_staff(telegram_id)
 
-    if staff:
-        cat_str = ", ".join(staff["categories"]) if staff["categories"] else "(chưa gán)"
+    if user_info:
+        role_name = "Tư vấn viên" if user_info.get("role") == "counselor" else "Staff"
+        cat_str = ", ".join(user_info["categories"]) if user_info["categories"] else "(chưa gán)"
         await update.message.reply_text(
             f"ℹ️ THÔNG TIN TÀI KHOẢN\n\n"
-            f"👤 Vai trò: Staff\n"
-            f"📛 Tên: {staff['name']}\n"
+            f"👤 Vai trò: {role_name}\n"
+            f"📛 Tên: {user_info['name']}\n"
             f"📚 Quyền: {cat_str}"
         )
     else:
@@ -132,9 +166,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not user_message:
         return
 
-    staff = get_staff(user_id)
-    if not staff:
-        await update.message.reply_text("⚠️ Bạn cần kích hoạt Staff trước.\nGửi: /kichhoat <mã STF-XXXXXX>")
+    user_info = get_staff(user_id)
+    if not user_info:
+        await update.message.reply_text("⚠️ Bạn cần kích hoạt tài khoản trước.\nGửi: /kichhoat <mã STF- hoặc TVV->")
         return
 
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action='typing')
@@ -147,12 +181,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     }
 
     # Pass the categories as an input string, just in case Chatflow uses it later for classification
-    cat_str = ", ".join(staff["categories"]) if staff["categories"] else ""
+    cat_str = ", ".join(user_info["categories"]) if user_info["categories"] else ""
 
     payload = {
         "inputs": {
             "staff_categories": cat_str,
-            "staff_name": staff["name"]
+            "staff_name": user_info["name"]
         },
         "query": user_message,
         "response_mode": "blocking",

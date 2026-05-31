@@ -67,8 +67,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Chào bạn! Đây là Bot Quản trị AIVA.\n\n"
         "🔑 Nếu bạn là Admin Tỉnh, hãy gửi:\n"
         "  /kichhoat <mã Admin>\n\n"
-        "🔑 Nếu bạn là Tư vấn viên (TVV), hãy gửi:\n"
-        "  /kichhoat <mã TVV>\n\n"
+        "💡 Tư vấn viên (TVV) vui lòng kích hoạt tại AIVA Staff Bot (@aiva_staff_bot).\n\n"
         "Gõ /help để xem tất cả lệnh."
     )
 
@@ -161,31 +160,10 @@ async def kichhoat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Check if it's a TVV activation code
         elif code.startswith("TVV-"):
-            counselor = db.query(Counselor).filter(Counselor.activation_code == code).first()
-            if not counselor:
-                await update.message.reply_text("❌ Mã kích hoạt không hợp lệ.")
-                return
-            if counselor.activated:
-                await update.message.reply_text("⚠️ Mã này đã được kích hoạt trước đó.")
-                return
-
-            counselor.telegram_id = telegram_id
-            counselor.activated = True
-            db.commit()
-
-            province = db.query(Province).filter(Province.id == counselor.province_id).first()
-            areas_str = ", ".join([a.area_name for a in counselor.areas])
-
-            await update.message.reply_text(
-                f"✅ Kích hoạt TVV thành công!\n\n"
-                f"👤 TVV: {counselor.name}\n"
-                f"📞 SĐT: {counselor.phone}\n"
-                f"🏛️ Tỉnh: {province.name if province else 'N/A'}\n"
-                f"📍 Khu vực: {areas_str}\n\n"
-                f"Từ giờ bạn sẽ nhận được thông báo khi có ca tư vấn mới trong khu vực của mình."
-            )
+            await update.message.reply_text("❌ Mã TVV phải được kích hoạt tại AIVA Staff Bot (@aiva_staff_bot).")
+            return
         else:
-            await update.message.reply_text("❌ Mã không hợp lệ. Mã phải bắt đầu bằng SA-, ADM- hoặc TVV-.")
+            await update.message.reply_text("❌ Mã không hợp lệ. Mã phải bắt đầu bằng SA- hoặc ADM-.")
     finally:
         db.close()
 
